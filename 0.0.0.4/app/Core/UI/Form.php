@@ -1,0 +1,211 @@
+<?php
+
+namespace Flex\Core\UI;
+
+use Flex\Core\Auth;
+
+class Form
+{
+    public static function input(string $name, string $label, array $attrs = []): void
+    {
+        $value = $attrs['value'] ?? '';
+        $type = $attrs['type'] ?? 'text';
+        $placeholder = $attrs['placeholder'] ?? '';
+        $required = isset($attrs['required']) ? 'required' : '';
+        $extra = $attrs['extra'] ?? '';
+        
+        $customClass = $attrs['class'] ?? '';
+
+        ?>
+        <div class="mb-4">
+            <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                <?= $label ?> <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
+            </label>
+            <input type="<?= $type ?>" name="<?= $name ?>" id="<?= $name ?>" 
+                value="<?= htmlspecialchars($value) ?>"
+                placeholder="<?= $placeholder ?>" <?= $required ?> <?= $extra ?>
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none <?= $customClass ?>">
+        </div>
+        <?php
+    }
+
+    public static function textarea(string $name, string $label, array $attrs = []): void
+    {
+        $value = $attrs['value'] ?? '';
+        $rows = $attrs['rows'] ?? 3;
+
+        ?>
+        <div class="mb-4">
+            <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                <?= $label ?>
+            </label>
+            <textarea name="<?= $name ?>" id="<?= $name ?>" rows="<?= $rows ?>"
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"><?= htmlspecialchars($value) ?></textarea>
+        </div>
+        <?php
+    }
+
+    public static function select(string $name, string $label, array $options = [], array $attrs = []): void
+    {
+        $selectedValue = $attrs['value'] ?? '';
+        $required = isset($attrs['required']) ? 'required' : '';
+        $extra = $attrs['extra'] ?? '';
+
+        ?>
+        <div class="mb-4">
+            <label for="<?= $name ?>" class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                <?= $label ?> <?= $required ? '<span class="text-rose-500">*</span>' : '' ?>
+            </label>
+            <div class="relative">
+                <select name="<?= $name ?>" 
+                        id="<?= $name ?>"
+                        <?= $required ?>
+                        <?= $extra ?>
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none appearance-none cursor-pointer">
+                    <?php foreach ($options as $value => $text): ?>
+                        <option value="<?= $value ?>" <?= $value == $selectedValue ? 'selected' : '' ?>>
+                            <?= $text ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    public static function toggle(string $name, string $label, array $options = []): void
+    {
+        $value = $options['value'] ?? true;
+        $id = $options['id'] ?? 'toggle-' . bin2hex(random_bytes(4));
+        $description = $options['description'] ?? null;
+        $checked = $value ? 'checked' : '';
+        
+        $attributes = '';
+        if (isset($options['attr']) && is_array($options['attr'])) {
+            foreach ($options['attr'] as $attr => $val) {
+                $attributes .= " {$attr}=\"{$val}\"";
+            }
+        }
+
+        ?>
+        <div class="flex items-center gap-4 py-3 px-1">
+            <label for="<?= $id ?>" class="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                <input type="checkbox" 
+                    name="<?= $name ?>" 
+                    id="<?= $id ?>" 
+                    value="1" 
+                    class="sr-only peer" 
+                    <?= $checked ?>
+                    <?= $attributes ?>>
+                
+                <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer 
+                            peer-checked:after:translate-x-full peer-checked:after:border-white 
+                            after:content-[''] after:absolute after:top-0.5 after:left-0.5 
+                            after:bg-white after:border-slate-300 after:border after:rounded-full 
+                            after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 shadow-inner">
+                </div>
+            </label>
+
+            <div class="flex flex-col select-none cursor-pointer" onclick="document.getElementById('<?= $id ?>').click()">
+                <span class="font-semibold text-slate-800 dark:text-slate-200 leading-tight">
+                    <?= $label ?>
+                </span>
+                <?php if ($description): ?>
+                    <span class="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed max-w-sm">
+                        <?= $description ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    public static function submit(string $label = 'Запази', string $icon = 'fa-check', array $options = []): void
+    {
+        $class = $options['class'] ?? 'bg-indigo-600 hover:bg-indigo-700 text-white';
+        $type = $options['type'] ?? 'submit';
+        ?>
+        <button type="<?= $type ?>" class="inline-flex items-center gap-2 px-5 py-3 rounded-md font-semibold text-sm transition-all shadow-sm active:scale-95 <?= $class ?>">
+            <?php if ($icon): ?>
+                <i class="fa-solid <?= $icon ?> text-lg"></i>
+            <?php endif; ?>
+            <?= $label ?>
+        </button>
+        <?php
+    }
+
+    public static function color(string $name, string $label, array $options = []): void
+    {
+        $value = $options['value'] ?? '#6366f1';
+        $id = $options['id'] ?? 'color-' . bin2hex(random_bytes(4));
+        ?>
+        <div class="flex flex-col gap-2">
+            <label for="<?= $id ?>" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <?= $label ?>
+            </label>
+            <div class="flex items-center gap-3 p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:border-indigo-300 transition-colors">
+                <input type="color" 
+                    name="<?= $name ?>" 
+                    id="<?= $id ?>" 
+                    value="<?= $value ?>" 
+                    class="w-10 h-10 border-0 p-0 bg-transparent cursor-pointer rounded-lg overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none">
+                
+                <input type="text" 
+                    value="<?= strtoupper($value) ?>" 
+                    oninput="document.getElementById('<?= $id ?>').value = this.value"
+                    class="text-sm font-mono text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-0 p-0 uppercase"
+                    maxlength="7">
+            </div>
+        </div>
+        <?php
+    }
+
+    public static function row(callable $slot, int $cols = 2): void
+    {
+        echo "<div class='grid grid-cols-1 md:grid-cols-{$cols} gap-6'>";
+        $slot();
+        echo "</div>";
+    }
+
+    public static function section(callable $slot, string|null $title = null, string|null $id = null): void
+    {
+        $sectionId = $id ?? 'section_' . substr(md5($title ?? 'default'), 0, 8);
+        $user = Auth::user();
+
+        $isOpen = $_SESSION['ui_states'][$sectionId] 
+                ?? $user->options['ui_states'][$sectionId] 
+                ?? true;
+
+        $stateJs = $isOpen ? 'true' : 'false';
+        ?>
+        
+        <div x-data="uiSection('<?= $sectionId ?>', <?= $stateJs ?>)" 
+            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm mb-5">
+            
+            <?php if ($title): ?>
+                <div @click="toggle()" 
+                    class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer flex items-center justify-between group">
+                    
+                    <h3 class="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider select-none">
+                        <?= $title ?>
+                    </h3>
+
+                    <div class="text-slate-400 group-hover:text-indigo-500 transition-transform duration-300"
+                        :class="isOpen ? 'rotate-180' : ''">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div x-show="isOpen" x-collapse x-cloak>
+                <div class="p-6">
+                    <?php $slot(); ?>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+}
