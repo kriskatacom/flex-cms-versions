@@ -1,0 +1,55 @@
+<?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+session_start();
+
+require_once 'vendor/autoload.php';
+
+use Dotenv\Dotenv;
+use Flex\Core\Database;
+use Flex\Core\Events\EventManager;
+use Flex\Core\Plugins\PluginManager;
+use Flex\Core\Routing\Router;
+use Illuminate\Database\Capsule\Manager as Capsule;
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$capsule = new Capsule;
+
+$capsule->addConnection([
+    'driver'    => 'mysql',
+    'host'      => $_ENV['DB_HOST'],
+    'database'  => $_ENV['DB_NAME'],
+    'username'  => $_ENV['DB_USER'],
+    'password'  => $_ENV['DB_PASS'],
+    'charset'   => $_ENV['DB_CHAR'],
+    'collation' => 'utf8mb4_unicode_ci',
+    'prefix'    => '',
+]);
+
+$capsule->setAsGlobal();
+$capsule->bootEloquent();
+
+function db() {
+    return Database::getInstance();
+}
+db();
+
+$events = EventManager::getInstance();
+$router = new Router($events);
+
+$activePlugins = ['page-plugin'];
+
+$pluginManager = new PluginManager($events, $activePlugins);
+$pluginManager->loadPlugins($router);
+
+$content = "Здравей, това е съдържанието на сайта.";
+$content = $events->applyFilters('the_content', $content);
+
+require_once __DIR__ . '/app/routes.php';
+
+$router->resolve();
